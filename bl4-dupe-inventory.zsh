@@ -102,6 +102,8 @@ function main() {
         return 1
     fi
 
+    "./${${${(%):-%x}:a}:h}/bl4-resolve-save-directory-path.zsh"
+
     write_header "DUPLICATING INVENTORY"
 
     echo "python \"${call_file}\" decrypt -in \"${save_file}\" -out \"${yaml_file}\" -id \"${STEAM_ID}\""
@@ -149,8 +151,8 @@ function main() {
         return 1
     fi
 
-    #mv -v "${save_file}" "${save_file}.old_$(date +%Y%m%d%H%M%S)"
-    #mv -v "${save_file}.new" "${save_file}"
+    mv -v "${save_file}" "${save_file}.old_$(date +%Y%m%d%H%M%S)"
+    mv -v "${save_file}.new" "${save_file}"
 
     printf '\n'
     write_info 'Started with %d inventory items; new files has %d.' "${size_init}" "${size_dupe}"
