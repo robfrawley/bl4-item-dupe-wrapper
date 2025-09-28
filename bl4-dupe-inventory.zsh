@@ -45,9 +45,13 @@ function env_make() {
 
     write_header "CHECKING PYTHON ENVIRONMENT"
     
-    if [[ ! -e "${venv_path}" ]] || [[ ! -f "${venv_incs}" ]] || [[ ! -f "${call_path}" ]]; then
+    if [[ ! -e "${venv_path}" ]] || [[ ! -f "${venv_incs}" ]] || [[ ! -e "${call_path}" ]]; then
         write_info 'Creating new Python virtual environment ("%s").' "${venv_path}"
-        python3 -m virtualenv "${venv_path}"
+        if ! python3 -m virtualenv "${venv_path}"; then
+            write_error 'Failed to create virtual environment! Halting.'
+            exit 1
+        fi
+
         git clone "${call_http}" "${call_path}"
         . "${venv_incs}"
         pip install -r "${call_path}/requirements.txt"
@@ -102,11 +106,9 @@ function main() {
         return 1
     fi
 
-    "./${${${(%):-%x}:a}:h}/bl4-resolve-save-directory-path.zsh"
+    zsh "${${${(%):-%x}:a}:h}/bl4-create-save-backup.zsh"
 
     write_header "DUPLICATING INVENTORY"
-
-    echo "python \"${call_file}\" decrypt -in \"${save_file}\" -out \"${yaml_file}\" -id \"${STEAM_ID}\""
 
     if ! python "${call_file}" decrypt -in "${save_file}" -out "${yaml_file}" -id "${STEAM_ID}"; then
         write_error 'Failed to execute external command to decrypt save file ("%s").' "${save_file}"

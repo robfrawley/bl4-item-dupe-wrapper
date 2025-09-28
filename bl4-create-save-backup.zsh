@@ -24,6 +24,11 @@ function main() {
     local save_path="$(${${${(%):-%x}:a}:h}/bl4-resolve-save-directory-path.zsh)"
     local back_path="${save_path}_$(date +%Y%m%d\-%H%M%S)"
 
+    if [[ ! -e "${save_path}" ]]; then
+        write_error 'Could not resolve save directory path! Exiting.'
+        exit 1
+    fi
+
     if [[ -e "${back_path}" ]]; then
         write_error 'Backup path ("%s") already exists! Not overwriting. Stopping.' "${back_path}"
         exit 1
