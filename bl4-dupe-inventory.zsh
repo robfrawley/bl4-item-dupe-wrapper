@@ -1,4 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
+
+set -o allexport
+source "${${${(%):-%x}:a}:h}/.env.local" || source "${${${(%):-%x}:a}:h}/.env"
+set +o allexport
 
 function write_error() {
     printf -- "!! Error: ${1}\n" "${@:2}"
@@ -10,15 +14,6 @@ function write_info() {
 
 function write_header() {
     printf "\n##\n## ${1}\n##\n\n" "${@:2}"
-}
-
-function first_valid_path() {
-    for p in "${@}"; do
-        if [[ -e "${p}" ]]; then
-            echo "${p}"
-            return 0
-        fi
-    done
 }
 
 function is_package_installed() {
@@ -50,7 +45,7 @@ function env_make() {
 
     write_header "CHECKING PYTHON ENVIRONMENT"
     
-    if [[ ! -e "${venv_path}" ]] || [[ ! -f "${venv_incs}" ]]; then
+    if [[ ! -e "${venv_path}" ]] || [[ ! -f "${venv_incs}" ]] || [[ ! -f "${call_path}" ]]; then
         write_info 'Creating new Python virtual environment ("%s").' "${venv_path}"
         python3 -m virtualenv "${venv_path}"
         git clone "${call_http}" "${call_path}"
@@ -64,21 +59,13 @@ function env_make() {
 function main() {
     local save_index="${1:-99}"
     local dupe_count="${2:-1}"
-
-    local windows_username="${WINDOWS_USERNAME:-${USER}}"
-    local steam_id="${STEAM_ID}"
-    local -a save_path_roots=(
-        "/mnt/c/Users/${windows_username}/Documents/My Games/Borderlands 4/Saved/SaveGames/${steam_id}/Profiles/client"
-        "/mnt/c/Users/${windows_username}/OneDrive/Documents/My Games/Borderlands 4/Saved/SaveGames/${steam_id}/Profiles/client"
-    )
-
-    local save_path="$(first_valid_path "${save_path_roots[@]}")"
+    local save_path="$(${${${(%):-%x}:a}:h}/bl4-resolve-save-directory-path.zsh)"
     local save_file
     local yaml_file
     local dupe_file
     local venv_path="${HOME}/bl4/venv"
     local venv_incs="${venv_path}/bin/activate"
-    local call_http="https://github.com/glacierpiece/borderlands-4-save-utility.git"
+    local call_http="https://github.com/glacierpiece/borderlands-4-save-utility"
     local call_path="${HOME}/bl4/save-decrypter"
     local call_file="${call_path}/blcrypt.py"
     local inventory
@@ -117,7 +104,9 @@ function main() {
 
     write_header "DUPLICATING INVENTORY"
 
-    if ! python "${call_file}" decrypt -in "${save_file}" -out "${yaml_file}" -id "${steam_id}"; then
+    echo "python \"${call_file}\" decrypt -in \"${save_file}\" -out \"${yaml_file}\" -id \"${STEAM_ID}\""
+
+    if ! python "${call_file}" decrypt -in "${save_file}" -out "${yaml_file}" -id "${STEAM_ID}"; then
         write_error 'Failed to execute external command to decrypt save file ("%s").' "${save_file}"
         return 1
     fi
@@ -155,13 +144,13 @@ function main() {
 
     yq '.state.inventory.items.backpack = '"$(echo "${inv_duped}" | jq -c .)" "${yaml_file}" > "${dupe_file}"
 
-    if ! python "${call_file}" encrypt -in "${dupe_file}" -out "${save_file}.new" -id "${steam_id}"; then
+    if ! python "${call_file}" encrypt -in "${dupe_file}" -out "${save_file}.new" -id "${STEAM_ID}"; then
         write_error 'Failed to execute external command to encrypt duped yaml file ("%s").' "${dupe_file}"
         return 1
     fi
 
-    mv -v "${save_file}" "${save_file}.old_$(date +%Y%m%d%H%M%S)"
-    mv -v "${save_file}.new" "${save_file}"
+    #mv -v "${save_file}" "${save_file}.old_$(date +%Y%m%d%H%M%S)"
+    #mv -v "${save_file}.new" "${save_file}"
 
     printf '\n'
     write_info 'Started with %d inventory items; new files has %d.' "${size_init}" "${size_dupe}"
