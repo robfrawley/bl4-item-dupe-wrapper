@@ -33,7 +33,11 @@ function main() {
     write_info 'Backing up "%s" to "%s" ...' "${save_path}" "${back_path}"
     write_none
 
-    cp -av "${save_path}" "${back_path}"
+    if ! cp -av "${save_path}" "${back_path}"; then
+        write_none
+        write_error 'Failed to back up some saves!!!!!'
+        exit 1
+    fi
 
     write_none
     write_info 'Operation completed!'
