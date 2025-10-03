@@ -88,8 +88,8 @@ function main() {
     save_file="${save_path}/${save_index}.sav"
     yaml_file="${save_path}/${save_index}.yaml"
 
-    if [[ ! -f "${save_file}" ]]; then
-        write_error 'Invalid BL4 save file path ("%s"). Ensure you passed the correct character index to the script when invoking it.' "${save_file}"
+    if [[ ! -f "${yaml_file}" ]]; then
+        write_error 'Invalid BL4 YAML save file path ("%s"). Ensure you passed the correct character index to the script when invoking it.' "${save_file}"
         return 1
     fi
 
